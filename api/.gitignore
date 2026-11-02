@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+*.tsbuildinfo
+# Keep environment variables out of version control
+.env
+firebase-service-account*.json
+secrets/
+
+/src/generated/prisma

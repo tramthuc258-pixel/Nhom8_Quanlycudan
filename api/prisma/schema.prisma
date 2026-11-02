@@ -1,0 +1,1010 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+enum RoleCode {
+  RESIDENT
+  MANAGEMENT
+  ADMIN
+  ACCOUNTANT
+  RECEPTIONIST
+  SECURITY
+  TECHNICIAN
+}
+
+enum ApartmentStatus {
+  OCCUPIED
+  VACANT
+  UNDER_MAINTENANCE
+}
+
+enum MembershipType {
+  OWNER
+  TENANT
+}
+
+enum MembershipStatus {
+  ACTIVE
+  ENDED
+}
+
+enum ResidenceVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum HouseholdMemberStatus {
+  ACTIVE
+  ENDED
+}
+
+enum HousingTransactionType {
+  RENT
+  PURCHASE
+}
+
+enum HousingListingStatus {
+  PENDING_APPROVAL
+  AVAILABLE
+  REJECTED
+  CLOSED
+}
+
+enum HousingApplicationStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+enum HousingInquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+enum HousingContractStatus {
+  SIGNED
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum TemporaryStayStatus {
+  PENDING
+  APPROVED
+  CHECKED_IN
+  CHECKED_OUT
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum SecurityIncidentType {
+  NOISE
+  DISORDER
+  SUSPICIOUS_PERSON
+  PROPERTY_DAMAGE
+  FIRE_SAFETY
+  DISPUTE
+  LOST_AND_FOUND
+  OTHER
+}
+
+enum SecurityIncidentStatus {
+  REPORTED
+  REVIEWING
+  RESOLVED
+  CANCELLED
+}
+
+enum FeeCalculationType {
+  FIXED
+  BY_AREA
+  BY_QUANTITY
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PAID
+  CANCELLED
+  OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  VNPAY
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum MaintenanceCategory {
+  ELECTRICAL
+  PLUMBING
+  ELEVATOR
+  COMMON_AREA
+  SECURITY
+  OTHER
+}
+
+enum MaintenancePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum MaintenanceStatus {
+  SUBMITTED
+  RECEIVED
+  IN_PROGRESS
+  WAITING_RESIDENT
+  COMPLETED
+  CANCELLED
+}
+
+enum ServiceCategory {
+  CLEANING
+  LAUNDRY
+  TECHNICAL
+  TRANSPORTATION
+  CONVENIENCE
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  WAITING_RESIDENT
+  COMPLETED
+  CANCELLED
+}
+
+enum AmenityCategory {
+  POOL
+  GYM
+  COMMUNITY_ROOM
+  SPORT
+  BARBECUE
+}
+
+enum AmenityBookingStatus {
+  PENDING
+  APPROVED
+  CHECKED_IN
+  COMPLETED
+  NO_SHOW
+  REJECTED
+  CANCELLED
+  BLOCKED
+}
+
+enum AnnouncementCategory {
+  GENERAL
+  MAINTENANCE
+  BILLING
+  EVENT
+  EMERGENCY
+}
+
+enum AnnouncementPriority {
+  NORMAL
+  IMPORTANT
+  URGENT
+}
+
+enum AnnouncementAudience {
+  ALL
+  RESIDENTS
+  MANAGERS
+}
+
+enum NotificationType {
+  INVOICE
+  MAINTENANCE
+  HOUSING
+  AMENITY
+  SERVICE
+  SYSTEM
+}
+
+enum DevicePlatform {
+  ANDROID
+  IOS
+  WEB
+}
+
+model User {
+  id                     String     @id @default(uuid()) @db.Uuid
+  email                  String     @unique @db.VarChar(255)
+  passwordHash           String     @map("password_hash") @db.VarChar(255)
+  fullName               String     @map("full_name") @db.VarChar(150)
+  phone                  String?    @db.VarChar(20)
+  dateOfBirth            DateTime?  @map("date_of_birth") @db.Date
+  contactAddress         String?    @map("contact_address") @db.VarChar(500)
+  avatarUrl              String?    @map("avatar_url") @db.Text
+  googleSubject          String?    @unique @map("google_subject") @db.VarChar(255)
+  mustChangePassword     Boolean    @default(false) @map("must_change_password")
+  passwordResetCodeHash  String?    @map("password_reset_code_hash") @db.VarChar(255)
+  passwordResetExpiresAt DateTime?  @map("password_reset_expires_at") @db.Timestamptz(6)
+  status                 UserStatus @default(ACTIVE)
+  createdAt              DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  userRoles                      UserRole[]
+  apartmentMemberships           ApartmentMembership[]
+  residenceVerificationRequests  ResidenceVerificationRequest[] @relation("ResidenceVerificationRequester")
+  reviewedResidenceVerifications ResidenceVerificationRequest[] @relation("ResidenceVerificationReviewer")
+  createdHouseholdMembers        HouseholdMember[]              @relation("HouseholdMemberCreator")
+  submittedListings              HousingListing[]               @relation("ListingSubmitter")
+  reviewedListings               HousingListing[]               @relation("ListingReviewer")
+  housingApplications            HousingApplication[]           @relation("HousingApplicant")
+  reviewedApplications           HousingApplication[]           @relation("ApplicationReviewer")
+  contractsAsOwner               HousingContract[]              @relation("ContractOwner")
+  contractsAsCustomer            HousingContract[]              @relation("ContractCustomer")
+  recordedContracts              HousingContract[]              @relation("ContractRecorder")
+  declaredTemporaryStays         TemporaryStay[]                @relation("TemporaryStayDeclarer")
+  reviewedTemporaryStays         TemporaryStay[]                @relation("TemporaryStayReviewer")
+  checkedInTemporaryStays        TemporaryStay[]                @relation("TemporaryStayCheckInGuard")
+  checkedOutTemporaryStays       TemporaryStay[]                @relation("TemporaryStayCheckOutGuard")
+  reportedSecurityIncidents      SecurityIncident[]             @relation("IncidentReporter")
+  resolvedSecurityIncidents      SecurityIncident[]             @relation("IncidentResolver")
+  assignedSecurityIncidents      SecurityIncident[]             @relation("IncidentAssignee")
+  securityIncidentAssignments    SecurityIncident[]             @relation("IncidentAssigner")
+  securityIncidentUpdates        SecurityIncidentUpdate[]       @relation("SecurityIncidentUpdateActor")
+  invoices                       Invoice[]                      @relation("InvoicePayer")
+  createdInvoices                Invoice[]                      @relation("InvoiceCreator")
+  publishedInvoices              Invoice[]                      @relation("InvoicePublisher")
+  recordedPayments               Payment[]                      @relation("PaymentRecorder")
+  confirmedPayments              Payment[]                      @relation("PaymentConfirmer")
+  requestedMaintenance           MaintenanceRequest[]           @relation("MaintenanceRequester")
+  createdMaintenance             MaintenanceRequest[]           @relation("MaintenanceCreator")
+  assignedMaintenance            MaintenanceRequest[]           @relation("MaintenanceTechnician")
+  maintenanceAssignments         MaintenanceRequest[]           @relation("MaintenanceAssigner")
+  maintenanceUpdates             MaintenanceUpdate[]            @relation("MaintenanceUpdateActor")
+  requestedServices              ServiceRequest[]               @relation("ServiceRequester")
+  createdServices                ServiceRequest[]               @relation("ServiceCreator")
+  assignedServices               ServiceRequest[]               @relation("ServiceAssignee")
+  serviceRequestUpdates          ServiceRequestUpdate[]         @relation("ServiceRequestUpdateActor")
+  amenityBookings                AmenityBooking[]               @relation("AmenityBooker")
+  reviewedAmenityBookings        AmenityBooking[]               @relation("AmenityReviewer")
+  processedAmenityBookings       AmenityBooking[]               @relation("AmenityProcessor")
+  announcements                  Announcement[]                 @relation("AnnouncementAuthor")
+  notifications                  Notification[]
+  deviceInstallations            DeviceInstallation[]
+  handledHousingInquiries        HousingInquiry[]               @relation("HousingInquiryHandler")
+  staffBuildingAssignments       StaffBuildingAssignment[]      @relation("StaffBuildingAssignmentUser")
+  createdBuildingAssignments     StaffBuildingAssignment[]      @relation("StaffBuildingAssignmentAssigner")
+  auditLogs                      AuditLog[]                     @relation("AuditLogActor")
+  refreshSessions                RefreshSession[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String   @map("actor_id") @db.Uuid
+  action     String   @db.VarChar(20)
+  resource   String   @db.VarChar(100)
+  targetId   String?  @map("target_id") @db.VarChar(100)
+  path       String   @db.VarChar(500)
+  statusCode Int      @map("status_code")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor      User     @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([actorId, createdAt])
+  @@index([resource, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model RegistrationVerification {
+  email        String   @id @db.VarChar(255)
+  fullName     String   @map("full_name") @db.VarChar(150)
+  phone        String?  @db.VarChar(20)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  codeHash     String   @map("code_hash") @db.VarChar(255)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  attempts     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("registration_verifications")
+}
+
+model RefreshSession {
+  id        String    @id @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@map("refresh_sessions")
+}
+
+model Role {
+  id          String     @id @default(uuid()) @db.Uuid
+  code        RoleCode   @unique
+  name        String     @db.VarChar(100)
+  description String?    @db.VarChar(500)
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  roleId     String   @map("role_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Building {
+  id                String                    @id @default(uuid()) @db.Uuid
+  code              String                    @unique @db.VarChar(30)
+  name              String                    @db.VarChar(150)
+  address           String                    @db.VarChar(500)
+  floors            Int
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartments        Apartment[]
+  securityIncidents SecurityIncident[]
+  amenities         Amenity[]
+  staffAssignments  StaffBuildingAssignment[]
+  announcements     Announcement[]
+
+  @@map("buildings")
+}
+
+model StaffBuildingAssignment {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  buildingId   String    @map("building_id") @db.Uuid
+  assignedById String?   @map("assigned_by_id") @db.Uuid
+  startDate    DateTime  @default(now()) @map("start_date") @db.Timestamptz(6)
+  endDate      DateTime? @map("end_date") @db.Timestamptz(6)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user       User     @relation("StaffBuildingAssignmentUser", fields: [userId], references: [id], onDelete: Cascade)
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  assignedBy User?    @relation("StaffBuildingAssignmentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, buildingId])
+  @@index([userId, isActive])
+  @@index([buildingId, isActive])
+  @@map("staff_building_assignments")
+}
+
+model Apartment {
+  id                            String                         @id @default(uuid()) @db.Uuid
+  buildingId                    String                         @map("building_id") @db.Uuid
+  code                          String                         @db.VarChar(30)
+  floor                         Int
+  area                          Decimal                        @db.Decimal(10, 2)
+  bedrooms                      Int
+  status                        ApartmentStatus                @default(VACANT)
+  createdAt                     DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                     DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  building                      Building                       @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+  memberships                   ApartmentMembership[]
+  residenceVerificationRequests ResidenceVerificationRequest[]
+  householdMembers              HouseholdMember[]
+  housingListings               HousingListing[]
+  housingContracts              HousingContract[]
+  temporaryStays                TemporaryStay[]
+  securityIncidents             SecurityIncident[]
+  invoices                      Invoice[]
+  maintenanceRequests           MaintenanceRequest[]
+  serviceRequests               ServiceRequest[]
+  amenityBookings               AmenityBooking[]
+
+  @@unique([buildingId, code])
+  @@index([status])
+  @@map("apartments")
+}
+
+model ApartmentMembership {
+  id          String           @id @default(uuid()) @db.Uuid
+  apartmentId String           @map("apartment_id") @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  type        MembershipType
+  status      MembershipStatus @default(ACTIVE)
+  isPrimary   Boolean          @default(false) @map("is_primary")
+  startDate   DateTime         @map("start_date") @db.Date
+  endDate     DateTime?        @map("end_date") @db.Date
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment   Apartment        @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([apartmentId, status])
+  @@index([userId, status])
+  @@map("apartment_memberships")
+}
+
+model ResidenceVerificationRequest {
+  id                String                      @id @default(uuid()) @db.Uuid
+  userId            String                      @map("user_id") @db.Uuid
+  apartmentId       String                      @map("apartment_id") @db.Uuid
+  type              MembershipType
+  status            ResidenceVerificationStatus @default(PENDING)
+  startDate         DateTime                    @map("start_date") @db.Date
+  verificationBasis String?                     @map("verification_basis") @db.VarChar(100)
+  note              String?                     @db.Text
+  reviewNote        String?                     @map("review_note") @db.Text
+  reviewedById      String?                     @map("reviewed_by_id") @db.Uuid
+  reviewedAt        DateTime?                   @map("reviewed_at") @db.Timestamptz(6)
+  createdAt         DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              User                        @relation("ResidenceVerificationRequester", fields: [userId], references: [id], onDelete: Restrict)
+  reviewedBy        User?                       @relation("ResidenceVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  apartment         Apartment                   @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([apartmentId, status])
+  @@index([status, createdAt])
+  @@map("residence_verification_requests")
+}
+
+model HouseholdMember {
+  id           String                @id @default(uuid()) @db.Uuid
+  apartmentId  String                @map("apartment_id") @db.Uuid
+  createdById  String                @map("created_by_id") @db.Uuid
+  fullName     String                @map("full_name") @db.VarChar(150)
+  dateOfBirth  DateTime?             @map("date_of_birth") @db.Date
+  phone        String?               @db.VarChar(20)
+  relationship String                @db.VarChar(100)
+  startDate    DateTime              @map("start_date") @db.Date
+  endDate      DateTime?             @map("end_date") @db.Date
+  status       HouseholdMemberStatus @default(ACTIVE)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment    Apartment             @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  createdBy    User                  @relation("HouseholdMemberCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([apartmentId, status])
+  @@index([createdById])
+  @@map("household_members")
+}
+
+model HousingListing {
+  id              String                 @id @default(uuid()) @db.Uuid
+  apartmentId     String                 @map("apartment_id") @db.Uuid
+  submittedById   String                 @map("submitted_by_id") @db.Uuid
+  reviewedById    String?                @map("reviewed_by_id") @db.Uuid
+  title           String                 @db.VarChar(200)
+  description     String                 @db.Text
+  transactionType HousingTransactionType @map("transaction_type")
+  price           Decimal                @db.Decimal(15, 2)
+  deposit         Decimal                @default(0) @db.Decimal(15, 2)
+  availableFrom   DateTime               @map("available_from") @db.Date
+  imageUrls       Json?                  @map("image_urls")
+  ownerSubmitted  Boolean                @default(false) @map("owner_submitted")
+  status          HousingListingStatus   @default(PENDING_APPROVAL)
+  reviewNote      String?                @map("review_note") @db.Text
+  reviewedAt      DateTime?              @map("reviewed_at") @db.Timestamptz(6)
+  closedAt        DateTime?              @map("closed_at") @db.Timestamptz(6)
+  createdAt       DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment       Apartment              @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  submittedBy     User                   @relation("ListingSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  reviewedBy      User?                  @relation("ListingReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  applications    HousingApplication[]
+  inquiries       HousingInquiry[]
+
+  @@index([apartmentId, status])
+  @@index([transactionType, status])
+  @@index([submittedById])
+  @@map("housing_listings")
+}
+
+model HousingInquiry {
+  id          String               @id @default(uuid()) @db.Uuid
+  code        String               @unique @db.VarChar(30)
+  listingId   String               @map("listing_id") @db.Uuid
+  fullName    String               @map("full_name") @db.VarChar(150)
+  phone       String               @db.VarChar(20)
+  email       String?              @db.VarChar(255)
+  message     String?              @db.Text
+  status      HousingInquiryStatus @default(NEW)
+  handledById String?              @map("handled_by_id") @db.Uuid
+  handledAt   DateTime?            @map("handled_at") @db.Timestamptz(6)
+  staffNote   String?              @map("staff_note") @db.Text
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  listing     HousingListing       @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  handledBy   User?                @relation("HousingInquiryHandler", fields: [handledById], references: [id], onDelete: SetNull)
+
+  @@index([listingId, status])
+  @@index([status, createdAt])
+  @@index([phone])
+  @@map("housing_inquiries")
+}
+
+model HousingApplication {
+  id                 String                   @id @default(uuid()) @db.Uuid
+  code               String                   @unique @db.VarChar(30)
+  listingId          String                   @map("listing_id") @db.Uuid
+  applicantId        String                   @map("applicant_id") @db.Uuid
+  preferredStartDate DateTime                 @map("preferred_start_date") @db.Date
+  preferredEndDate   DateTime?                @map("preferred_end_date") @db.Date
+  note               String?                  @db.Text
+  status             HousingApplicationStatus @default(PENDING)
+  reviewedById       String?                  @map("reviewed_by_id") @db.Uuid
+  reviewedAt         DateTime?                @map("reviewed_at") @db.Timestamptz(6)
+  reviewNote         String?                  @map("review_note") @db.Text
+  submittedAt        DateTime                 @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  listing            HousingListing           @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  applicant          User                     @relation("HousingApplicant", fields: [applicantId], references: [id], onDelete: Restrict)
+  reviewedBy         User?                    @relation("ApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  contract           HousingContract?
+
+  @@index([listingId, status])
+  @@index([applicantId, status])
+  @@map("housing_applications")
+}
+
+model HousingContract {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  contractNumber     String                 @unique @map("contract_number") @db.VarChar(50)
+  applicationId      String                 @unique @map("application_id") @db.Uuid
+  apartmentId        String                 @map("apartment_id") @db.Uuid
+  ownerId            String                 @map("owner_id") @db.Uuid
+  customerId         String                 @map("customer_id") @db.Uuid
+  recordedById       String                 @map("recorded_by_id") @db.Uuid
+  transactionType    HousingTransactionType @map("transaction_type")
+  agreedPrice        Decimal                @map("agreed_price") @db.Decimal(15, 2)
+  deposit            Decimal                @default(0) @db.Decimal(15, 2)
+  signedAt           DateTime               @map("signed_at") @db.Date
+  effectiveStartDate DateTime               @map("effective_start_date") @db.Date
+  effectiveEndDate   DateTime?              @map("effective_end_date") @db.Date
+  status             HousingContractStatus  @default(SIGNED)
+  note               String?                @db.Text
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  application        HousingApplication     @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  apartment          Apartment              @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  owner              User                   @relation("ContractOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  customer           User                   @relation("ContractCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  recordedBy         User                   @relation("ContractRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+
+  @@index([apartmentId, status])
+  @@index([ownerId])
+  @@index([customerId])
+  @@map("housing_contracts")
+}
+
+model TemporaryStay {
+  id                     String              @id @default(uuid()) @db.Uuid
+  apartmentId            String              @map("apartment_id") @db.Uuid
+  declaredById           String              @map("declared_by_id") @db.Uuid
+  reviewedById           String?             @map("reviewed_by_id") @db.Uuid
+  checkedInById          String?             @map("checked_in_by_id") @db.Uuid
+  checkedOutById         String?             @map("checked_out_by_id") @db.Uuid
+  guestFullName          String              @map("guest_full_name") @db.VarChar(150)
+  guestDateOfBirth       DateTime?           @map("guest_date_of_birth") @db.Date
+  guestPhone             String?             @map("guest_phone") @db.VarChar(20)
+  relationshipToResident String?             @map("relationship_to_resident") @db.VarChar(100)
+  startDate              DateTime            @map("start_date") @db.Date
+  endDate                DateTime            @map("end_date") @db.Date
+  purpose                String?             @db.VarChar(500)
+  status                 TemporaryStayStatus @default(PENDING)
+  reviewNote             String?             @map("review_note") @db.Text
+  reviewedAt             DateTime?           @map("reviewed_at") @db.Timestamptz(6)
+  checkedInAt            DateTime?           @map("checked_in_at") @db.Timestamptz(6)
+  checkedOutAt           DateTime?           @map("checked_out_at") @db.Timestamptz(6)
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment              Apartment           @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  declaredBy             User                @relation("TemporaryStayDeclarer", fields: [declaredById], references: [id], onDelete: Restrict)
+  reviewedBy             User?               @relation("TemporaryStayReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  checkedInBy            User?               @relation("TemporaryStayCheckInGuard", fields: [checkedInById], references: [id], onDelete: SetNull)
+  checkedOutBy           User?               @relation("TemporaryStayCheckOutGuard", fields: [checkedOutById], references: [id], onDelete: SetNull)
+
+  @@index([apartmentId, startDate, endDate])
+  @@index([status])
+  @@map("temporary_stays")
+}
+
+model SecurityIncident {
+  id             String                   @id @default(uuid()) @db.Uuid
+  code           String                   @unique @db.VarChar(30)
+  buildingId     String                   @map("building_id") @db.Uuid
+  apartmentId    String?                  @map("apartment_id") @db.Uuid
+  reportedById   String                   @map("reported_by_id") @db.Uuid
+  resolvedById   String?                  @map("resolved_by_id") @db.Uuid
+  assignedToId   String?                  @map("assigned_to_id") @db.Uuid
+  assignedById   String?                  @map("assigned_by_id") @db.Uuid
+  type           SecurityIncidentType
+  title          String                   @db.VarChar(200)
+  description    String                   @db.Text
+  location       String?                  @db.VarChar(255)
+  occurredAt     DateTime                 @map("occurred_at") @db.Timestamptz(6)
+  status         SecurityIncidentStatus   @default(REPORTED)
+  resolutionNote String?                  @map("resolution_note") @db.Text
+  resolvedAt     DateTime?                @map("resolved_at") @db.Timestamptz(6)
+  assignedAt     DateTime?                @map("assigned_at") @db.Timestamptz(6)
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  building       Building                 @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+  apartment      Apartment?               @relation(fields: [apartmentId], references: [id], onDelete: SetNull)
+  reportedBy     User                     @relation("IncidentReporter", fields: [reportedById], references: [id], onDelete: Restrict)
+  resolvedBy     User?                    @relation("IncidentResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  assignedTo     User?                    @relation("IncidentAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedBy     User?                    @relation("IncidentAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  updates        SecurityIncidentUpdate[]
+
+  @@index([buildingId, status])
+  @@index([apartmentId])
+  @@index([occurredAt])
+  @@index([assignedToId, status])
+  @@map("security_incidents")
+}
+
+model SecurityIncidentUpdate {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  securityIncidentId String                 @map("security_incident_id") @db.Uuid
+  actorId            String                 @map("actor_id") @db.Uuid
+  status             SecurityIncidentStatus
+  note               String?                @db.Text
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  incident           SecurityIncident       @relation(fields: [securityIncidentId], references: [id], onDelete: Cascade)
+  actor              User                   @relation("SecurityIncidentUpdateActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([securityIncidentId, createdAt])
+  @@index([actorId])
+  @@map("security_incident_updates")
+}
+
+model FeeType {
+  id               String             @id @default(uuid()) @db.Uuid
+  code             String             @unique @db.VarChar(30)
+  name             String             @db.VarChar(150)
+  description      String?            @db.VarChar(500)
+  calculationType  FeeCalculationType @map("calculation_type")
+  defaultUnitPrice Decimal            @map("default_unit_price") @db.Decimal(15, 2)
+  isActive         Boolean            @default(true) @map("is_active")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  invoiceItems     InvoiceItem[]
+
+  @@map("fee_types")
+}
+
+model Invoice {
+  id            String        @id @default(uuid()) @db.Uuid
+  code          String        @unique @db.VarChar(30)
+  apartmentId   String        @map("apartment_id") @db.Uuid
+  payerId       String        @map("payer_id") @db.Uuid
+  createdById   String?       @map("created_by_id") @db.Uuid
+  publishedById String?       @map("published_by_id") @db.Uuid
+  billingMonth  DateTime      @map("billing_month") @db.Date
+  issuedAt      DateTime      @map("issued_at") @db.Timestamptz(6)
+  publishedAt   DateTime?     @map("published_at") @db.Timestamptz(6)
+  dueDate       DateTime      @map("due_date") @db.Date
+  status        InvoiceStatus @default(DRAFT)
+  totalAmount   Decimal       @default(0) @map("total_amount") @db.Decimal(15, 2)
+  note          String?       @db.Text
+  paidAt        DateTime?     @map("paid_at") @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment     Apartment     @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  payer         User          @relation("InvoicePayer", fields: [payerId], references: [id], onDelete: Restrict)
+  createdBy     User?         @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  publishedBy   User?         @relation("InvoicePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  items         InvoiceItem[]
+  payments      Payment[]
+
+  @@unique([apartmentId, billingMonth])
+  @@index([payerId, status])
+  @@index([createdById])
+  @@index([publishedById])
+  @@index([dueDate, status])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id        String   @id @default(uuid()) @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  feeTypeId String?  @map("fee_type_id") @db.Uuid
+  name      String   @db.VarChar(150)
+  quantity  Decimal  @default(1) @db.Decimal(12, 2)
+  unitPrice Decimal  @map("unit_price") @db.Decimal(15, 2)
+  amount    Decimal  @db.Decimal(15, 2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  feeType   FeeType? @relation(fields: [feeTypeId], references: [id], onDelete: SetNull)
+    serviceRequest ServiceRequest? @relation("ServiceInvoiceItem")
+
+  @@index([invoiceId])
+  @@index([feeTypeId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  invoiceId       String        @map("invoice_id") @db.Uuid
+  recordedById    String        @map("recorded_by_id") @db.Uuid
+  confirmedById   String?       @map("confirmed_by_id") @db.Uuid
+  amount          Decimal       @db.Decimal(15, 2)
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionCode String?       @unique @map("transaction_code") @db.VarChar(100)
+  proofUrl        String?       @map("proof_url") @db.Text
+  note            String?       @db.Text
+  paidAt          DateTime?     @map("paid_at") @db.Timestamptz(6)
+  confirmedAt     DateTime?     @map("confirmed_at") @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  recordedBy      User          @relation("PaymentRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  confirmedBy     User?         @relation("PaymentConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId, status])
+  @@index([confirmedById])
+  @@map("payments")
+}
+
+model MaintenanceRequest {
+  id                   String              @id @default(uuid()) @db.Uuid
+  code                 String              @unique @db.VarChar(30)
+  apartmentId          String              @map("apartment_id") @db.Uuid
+  requestedById        String              @map("requested_by_id") @db.Uuid
+  createdById          String?             @map("created_by_id") @db.Uuid
+  assignedTechnicianId String?             @map("assigned_technician_id") @db.Uuid
+  assignedTeamName     String?             @map("assigned_team_name") @db.VarChar(150)
+  assignedById         String?             @map("assigned_by_id") @db.Uuid
+  title                String              @db.VarChar(200)
+  description          String              @db.Text
+  location             String?             @db.VarChar(255)
+  category             MaintenanceCategory
+  priority             MaintenancePriority @default(NORMAL)
+  status               MaintenanceStatus   @default(SUBMITTED)
+  imageUrls            Json?               @map("image_urls")
+  assignedAt           DateTime?           @map("assigned_at") @db.Timestamptz(6)
+  completedAt          DateTime?           @map("completed_at") @db.Timestamptz(6)
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  apartment            Apartment           @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  requestedBy          User                @relation("MaintenanceRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  createdBy            User?               @relation("MaintenanceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedTechnician   User?               @relation("MaintenanceTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  assignedBy           User?               @relation("MaintenanceAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+  updates              MaintenanceUpdate[]
+
+  @@index([apartmentId, status])
+  @@index([requestedById, status])
+  @@index([assignedTechnicianId, status])
+  @@map("maintenance_requests")
+}
+
+model MaintenanceUpdate {
+  id                   String             @id @default(uuid()) @db.Uuid
+  maintenanceRequestId String             @map("maintenance_request_id") @db.Uuid
+  actorId              String             @map("actor_id") @db.Uuid
+  status               MaintenanceStatus
+  note                 String?            @db.Text
+  imageUrls            Json?              @map("image_urls")
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  maintenanceRequest   MaintenanceRequest @relation(fields: [maintenanceRequestId], references: [id], onDelete: Cascade)
+  actor                User               @relation("MaintenanceUpdateActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([maintenanceRequestId, createdAt])
+  @@map("maintenance_updates")
+}
+
+model Service {
+  id                       String           @id @default(uuid()) @db.Uuid
+  name                     String           @db.VarChar(150)
+  description              String?          @db.Text
+  category                 ServiceCategory
+  unitLabel                String           @map("unit_label") @db.VarChar(50)
+  unitPrice                Decimal          @map("unit_price") @db.Decimal(15, 2)
+  estimatedDurationMinutes Int?             @map("estimated_duration_minutes")
+  providerName             String?          @map("provider_name") @db.VarChar(150)
+  contactPhone             String?          @map("contact_phone") @db.VarChar(20)
+  isActive                 Boolean          @default(true) @map("is_active")
+  createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  requests                 ServiceRequest[]
+
+  @@index([category, isActive])
+  @@map("services")
+}
+
+model ServiceRequest {
+  id             String                 @id @default(uuid()) @db.Uuid
+  code           String                 @unique @db.VarChar(30)
+  serviceId      String                 @map("service_id") @db.Uuid
+  apartmentId    String                 @map("apartment_id") @db.Uuid
+  requestedById  String                 @map("requested_by_id") @db.Uuid
+  createdById    String?                @map("created_by_id") @db.Uuid
+  assignedToId   String?                @map("assigned_to_id") @db.Uuid
+    billedInvoiceItemId String?           @unique @map("billed_invoice_item_id") @db.Uuid
+  assignedToName String?                @map("assigned_to_name") @db.VarChar(150)
+  quantity       Decimal                @default(1) @db.Decimal(12, 2)
+  unitPrice      Decimal                @map("unit_price") @db.Decimal(15, 2)
+  scheduledAt    DateTime               @map("scheduled_at") @db.Timestamptz(6)
+  note           String?                @db.Text
+  status         ServiceRequestStatus   @default(PENDING)
+  managementNote String?                @map("management_note") @db.Text
+  completedAt    DateTime?              @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  service        Service                @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  apartment      Apartment              @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  requestedBy    User                   @relation("ServiceRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  createdBy      User?                  @relation("ServiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  assignedTo     User?                  @relation("ServiceAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+    billedInvoiceItem InvoiceItem?        @relation("ServiceInvoiceItem", fields: [billedInvoiceItemId], references: [id], onDelete: SetNull)
+  updates        ServiceRequestUpdate[]
+
+  @@index([serviceId, status])
+  @@index([apartmentId, status])
+  @@index([requestedById, status])
+  @@index([assignedToId, status])
+  @@map("service_requests")
+}
+
+model ServiceRequestUpdate {
+  id               String               @id @default(uuid()) @db.Uuid
+  serviceRequestId String               @map("service_request_id") @db.Uuid
+  actorId          String               @map("actor_id") @db.Uuid
+  status           ServiceRequestStatus
+  note             String?              @db.Text
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  serviceRequest   ServiceRequest       @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+  actor            User                 @relation("ServiceRequestUpdateActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([serviceRequestId, createdAt])
+  @@index([actorId])
+  @@map("service_request_updates")
+}
+
+model Amenity {
+  id                  String           @id @default(uuid()) @db.Uuid
+  buildingId          String           @map("building_id") @db.Uuid
+  name                String           @db.VarChar(150)
+  description         String?          @db.Text
+  category            AmenityCategory
+  capacity            Int
+  slotDurationMinutes Int              @map("slot_duration_minutes")
+  openingHour         Int              @map("opening_hour")
+  closingHour         Int              @map("closing_hour")
+  fee                 Decimal          @default(0) @db.Decimal(15, 2)
+  isActive            Boolean          @default(true) @map("is_active")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  building            Building         @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+  bookings            AmenityBooking[]
+
+  @@index([buildingId, category, isActive])
+  @@map("amenities")
+}
+
+model AmenityBooking {
+  id             String               @id @default(uuid()) @db.Uuid
+  code           String               @unique @db.VarChar(30)
+  amenityId      String               @map("amenity_id") @db.Uuid
+  apartmentId    String?              @map("apartment_id") @db.Uuid
+  residentId     String               @map("resident_id") @db.Uuid
+  reviewedById   String?              @map("reviewed_by_id") @db.Uuid
+  processedById  String?              @map("processed_by_id") @db.Uuid
+  startAt        DateTime             @map("start_at") @db.Timestamptz(6)
+  endAt          DateTime             @map("end_at") @db.Timestamptz(6)
+  attendeeCount  Int                  @map("attendee_count")
+  note           String?              @db.Text
+  status         AmenityBookingStatus @default(PENDING)
+  managementNote String?              @map("management_note") @db.Text
+  reviewedAt     DateTime?            @map("reviewed_at") @db.Timestamptz(6)
+  checkedInAt    DateTime?            @map("checked_in_at") @db.Timestamptz(6)
+  completedAt    DateTime?            @map("completed_at") @db.Timestamptz(6)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  amenity        Amenity              @relation(fields: [amenityId], references: [id], onDelete: Restrict)
+  apartment      Apartment?           @relation(fields: [apartmentId], references: [id], onDelete: Restrict)
+  resident       User                 @relation("AmenityBooker", fields: [residentId], references: [id], onDelete: Restrict)
+  reviewedBy     User?                @relation("AmenityReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  processedBy    User?                @relation("AmenityProcessor", fields: [processedById], references: [id], onDelete: SetNull)
+
+  @@index([amenityId, startAt, endAt])
+  @@index([residentId, status])
+  @@map("amenity_bookings")
+}
+
+model Announcement {
+  id          String               @id @default(uuid()) @db.Uuid
+  authorId    String               @map("author_id") @db.Uuid
+  buildingId  String?              @map("building_id") @db.Uuid
+  title       String               @db.VarChar(200)
+  content     String               @db.Text
+  category    AnnouncementCategory @default(GENERAL)
+  priority    AnnouncementPriority @default(NORMAL)
+  audience    AnnouncementAudience @default(ALL)
+  publishedAt DateTime?            @map("published_at") @db.Timestamptz(6)
+  expiresAt   DateTime?            @map("expires_at") @db.Timestamptz(6)
+  isPinned    Boolean              @default(false) @map("is_pinned")
+  isPublished Boolean              @default(false) @map("is_published")
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  author      User                 @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  building    Building?            @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+
+  @@index([isPublished, audience, publishedAt])
+  @@index([isPinned, priority])
+  @@index([buildingId, isPublished, publishedAt])
+  @@map("announcements")
+}
+
+model Notification {
+  id            String           @id @default(uuid()) @db.Uuid
+  userId        String           @map("user_id") @db.Uuid
+  title         String           @db.VarChar(200)
+  message       String           @db.Text
+  type          NotificationType
+  referenceType String?          @map("reference_type") @db.VarChar(50)
+  referenceId   String?          @map("reference_id") @db.Uuid
+  readAt        DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model DeviceInstallation {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  firebaseToken String         @unique @map("firebase_token") @db.Text
+  platform      DevicePlatform
+  deviceName    String?        @map("device_name") @db.VarChar(150)
+  isActive      Boolean        @default(true) @map("is_active")
+  lastSeenAt    DateTime       @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("device_installations")
+}
